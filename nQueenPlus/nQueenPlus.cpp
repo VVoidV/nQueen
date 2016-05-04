@@ -75,7 +75,8 @@ void setqueen(const int n, queenNode &queen)
 
 void QS(void)
 {
-	int dCollisions;
+	int restart = 0;
+	int oldH;
 	int swapPerformed;
 	queenNode queen;
 	queen.col.resize(nQueen);
@@ -95,25 +96,43 @@ void QS(void)
 			{
 				for (int j = i + 1; j < nQueen; j++)
 				{
+					oldH = queen.h;
 					if (queen.d1[i + queen.q[i]] > 1 || queen.d2[i - queen.q[i] + (nQueen - 1)] > 1
 						|| queen.d1[j + queen.q[j]] > 1 || queen.d2[j - queen.q[j] + (nQueen - 1)] > 1)
 					{
-						dCollisions = -(queen.d1[i + queen.q[i]] - 1 + queen.d2[i - queen.q[i] + (nQueen - 1)] - 1)
-							+ (queen.d1[i + queen.q[j]] + queen.d2[i - queen.q[j] + (nQueen - 1)])
-							- (queen.d1[j + queen.q[j]] - 1 + queen.d2[j - queen.q[j] + (nQueen - 1)] - 1)
-							+ (queen.d1[j + queen.q[i]] + queen.d2[j - queen.q[i] + (nQueen - 1)]);
-						if (dCollisions < 0)
+						//拿掉i行和j行的皇后
+						queen.h = queen.h - (queen.d1[i + queen.q[i]] - 1) - (queen.d1[j + queen.q[j]] - 1)
+							- (queen.d2[i - queen.q[i] + nQueen - 1] - 1) - (queen.d2[j - queen.q[j] + nQueen - 1]);
+						//尝试交换
+						queen.d1[i + queen.q[i]]--;
+						queen.d1[i + queen.q[j]]++;
+						queen.d2[i - queen.q[i] + (nQueen - 1)]--;
+						queen.d2[i - queen.q[j] + (nQueen - 1)]++;
+						queen.d1[j + queen.q[j]]--;
+						queen.d1[j + queen.q[i]]++;
+						queen.d2[j - queen.q[j] + (nQueen - 1)]--;
+						queen.d2[j - queen.q[i] + (nQueen - 1)]++;
+						Swap(&queen.q[i], &queen.q[j]);
+						//计算新的冲突数
+						queen.h = queen.h + (queen.d1[i + queen.q[i]] - 1) + (queen.d1[j + queen.q[j]] - 1)
+							+ (queen.d2[i - queen.q[i] + nQueen - 1] - 1) + (queen.d2[j - queen.q[j] + nQueen - 1]);
+
+						if (oldH <= queen.h)
 						{
+							//冲突未减小，放回去
 							queen.d1[i + queen.q[i]]--;
 							queen.d1[i + queen.q[j]]++;
 							queen.d2[i - queen.q[i] + (nQueen - 1)]--;
-							queen.d2[i - queen.q[j] + (nQueen - 1)]--;
+							queen.d2[i - queen.q[j] + (nQueen - 1)]++;
 							queen.d1[j + queen.q[j]]--;
 							queen.d1[j + queen.q[i]]++;
 							queen.d2[j - queen.q[j] + (nQueen - 1)]--;
-							queen.d2[j - queen.q[i] + (nQueen - 1)]--;
+							queen.d2[j - queen.q[i] + (nQueen - 1)]++;
 							Swap(&queen.q[i], &queen.q[j]);
-							queen.h += dCollisions;
+							queen.h = oldH;
+						}
+						else
+						{
 							swapPerformed++;
 						}
 					}
@@ -121,89 +140,18 @@ void QS(void)
 			}
 
 		} while (swapPerformed != 0);
-
+		restart++;
 	} while (queen.h != 0);
+	ofstream output("QS_RESULT.txt");
 	for (int i = 0; i < nQueen; i++)
 	{
-		cout << queen.q[i] << endl;
+		output << queen.q[i] << endl;
 	}
+	cout << restart << endl;
+	output.close();
 }
 
-int minSuccessor(const queenNode &current, queenNode &neighboor)
-{
-	int oldCol;
-	int oldH;
-	int tmpH;
-	vector<queenNode> minNeighboor;
 
-	neighboor = current;
-	minNeighboor.push_back(neighboor);
-
-	for (int i = 0; i < nQueen; i++)
-	{
-		oldCol = current.q[i];
-		for (int j = 0; j < nQueen; j++)
-		{
-			if (oldCol != j )
-			{
-				neighboor.q[i] = j;
-				tmpH = current.h;
-				//计算h
-				tmpH = tmpH - (current.col[oldCol] - 1) + (current.col[j])
-					- (current.d1[i + oldCol] - 1) + current.d1[i + j]
-					- (current.d2[i - oldCol + (nQueen - 1)] - 1) + current.d2[i - j + (nQueen - 1)];
-
-				if (tmpH <= minNeighboor.back().h)
-				{
-					//更新记录的情况
-					neighboor.h = tmpH;
-					neighboor.col[oldCol]--;
-					neighboor.col[j]++;
-					neighboor.d1[i + oldCol]--;
-					neighboor.d1[i + j]++;
-					neighboor.d2[i - oldCol + (nQueen - 1)]--;
-					neighboor.d2[i - j + (nQueen - 1)]++;
-					minNeighboor.push_back(neighboor);
-				}
-				else
-				{
-					neighboor.q[i] = oldCol;
-					continue;
-				}
-
-			}
-			else
-			{
-				continue;
-			}
-			//重置
-			neighboor.q[i] = oldCol;
-			neighboor.h = current.h;
-			neighboor.col[oldCol]++;
-			neighboor.col[j]--;
-			neighboor.d1[i + oldCol]++;
-			neighboor.d1[i + j]--;
-			neighboor.d2[i - oldCol + (nQueen - 1)]++;
-			neighboor.d2[i - j + (nQueen - 1)]--;
-		}
-	}
-
-	if (minNeighboor.size() > 1)
-	{
-		int minCount = 1;
-		for (int i = minNeighboor.size() - 1; i - 1 >= 0 && minNeighboor.at(i).h == minNeighboor.at(i - 1).h; i--)
-		{
-			minCount++;
-		}
-		neighboor = minNeighboor.at(minNeighboor.size() - 1 - rand() % minCount);
-	}
-	else
-	{
-		neighboor = minNeighboor.at(0);
-	}
-
-	return neighboor.h;
-}
 
 int main()
 {
@@ -223,55 +171,10 @@ int main()
 	time_t start, end;
 	start = clock();
 
-	/*current.col.resize(nQueen, 0);
-	current.d1.resize(2 * nQueen - 1, 0);
-	current.d2.resize(2 * nQueen - 1, 0);
-	int count = 0;
-	while (true)
-	{
-
-		current.h = 0;
-		current.d1.assign(current.d1.size(), 0);
-		current.d2.assign(current.d2.size(), 0);
-		current.col.assign(current.col.size(), 0);
-		setqueen(nQueen, current, obstacleX, obstacleY);
-		count++;
-		while (true)
-		{
-			minSuccessor(current, neighboor);
-
-			if (neighboor.h == 0)
-			{
-				//输出解
-				cout << "Solved!" << endl;
-				for (int i = 0; i < nQueen; i++)
-				{
-
-					cout << neighboor.q[i] << endl;
-				}
-				cout << "迭代次数" << count << endl;
-				goto FOUND;
-			}
-
-			if (neighboor.h < current.h)
-			{
-				//后继中最优的
-				current = neighboor;
-			}
-			else
-			{
-				//没有找到解，重新随机开始
-				break;
-			}
-		}
-
-
-
-	}*/
+	
 
 	QS();
 
-FOUND:
 	end = clock();
 	cout << (double)(end - start) / CLOCKS_PER_SEC;
 
@@ -280,6 +183,7 @@ FOUND:
 	int b[] = { 2,2 };
 	putRes(a,b,b,4);
 	output.close();*/
+	getchar();
 	return 0;
 }
 
