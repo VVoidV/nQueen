@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include<iostream>
 #include <queue>
 #include<fstream>
 #include<vector>
@@ -14,11 +15,6 @@ using namespace std;
 int obstacleX;
 int obstacleY;
 int nQueen;
-
-/*struct pos {
-	int x;
-	int y;
-};*/
 
 struct queenNode {
 	int h;
@@ -70,9 +66,11 @@ int minSuccessor(const queenNode &current,queenNode &neighboor)
 	int oldCol;
 	int oldH;
 	int tmpH;
-	queenNode minNeighboor;
+	vector<queenNode> minNeighboor;
 
-	minNeighboor=neighboor = current;
+	neighboor = current;
+	minNeighboor.push_back(neighboor);
+
 	for (int i = 0; i < nQueen; i++)
 	{
 		oldCol = current.q[i];
@@ -87,7 +85,7 @@ int minSuccessor(const queenNode &current,queenNode &neighboor)
 					- (current.d1[i + oldCol] - 1) + current.d1[i + j]
 					- (current.d2[i - oldCol + (nQueen - 1)] - 1) + current.d2[i - j + (nQueen - 1)];
 
-				if (tmpH < minNeighboor.h)
+				if (tmpH <= minNeighboor.back().h)
 				{
 					//更新记录的情况
 					neighboor.h = tmpH;
@@ -97,7 +95,7 @@ int minSuccessor(const queenNode &current,queenNode &neighboor)
 					neighboor.d1[i + j ]++;
 					neighboor.d2[i - oldCol + (nQueen - 1) ]--;
 					neighboor.d2[i - j + (nQueen - 1)]++;
-					minNeighboor = neighboor;
+					minNeighboor.push_back(neighboor);
 				}
 				else
 				{
@@ -122,7 +120,21 @@ int minSuccessor(const queenNode &current,queenNode &neighboor)
 		}
 		
 	}
-	neighboor = minNeighboor;
+	
+	if (minNeighboor.size() > 1)
+	{	
+		int minCount=1;
+		for (int i = minNeighboor.size() - 1; i-1>=0&&minNeighboor.at(i).h == minNeighboor.at(i - 1).h; i--)
+		{
+			minCount++;
+		}
+		neighboor = minNeighboor.at(minNeighboor.size() - 1 - rand() % minCount);
+	}
+	else
+	{
+		neighboor = minNeighboor.at(0);
+	}
+	
 	return neighboor.h;
 }
 
@@ -186,25 +198,7 @@ int count = 0;
 			}
 		}
 		
-		/*do
-		{
-			//扩展current，选出最大的neighbor
-			cout<<maxSuccessor(current, neighboor)<<endl ;
 
-			count++;
-			if (neighboor.h == 0)
-			{
-				//输出解
-				cout << "Solved!" << endl;
-				for (int i = 0; i < nQueen; i++)
-				{
-					
-					cout << neighboor.q[i] << endl;
-				}
-				cout <<"迭代次数" <<count << endl;
-				goto FOUND;
-			}
-		} while (neighboor.h < current.h);*/
 
 	}
 	
@@ -213,12 +207,6 @@ int count = 0;
 FOUND:
 	end = clock();
 	cout << (double)(end-start)/CLOCKS_PER_SEC;
-	
-	
-	/*int a[] = { 2,0,3,1 };
-	int b[] = { 2,2 };
-	putRes(a,b,b,4);
-	output.close();*/
     return 0;
 }
 
