@@ -8,6 +8,7 @@
 #include<time.h>
 #include<random>
 #include <array>
+#define C1 0.45
 using namespace std;
 
 
@@ -15,6 +16,7 @@ int obstacleX;
 int obstacleY;
 int nQueen;
 int c;
+int C2;
 random_device rd;   // non-deterministic generator
 mt19937 gen(rd());  // to seed mersenne twister.
 uniform_int_distribution<> dist(0, 0x7fffffff); // distribute results between 0 and 0x7fffffff inclusive.
@@ -25,7 +27,7 @@ struct queenNode {
 	vector<int> d1;//次对角线
 	vector<int> d2;//主对角线
 	vector<int> attack;
-};
+}queen;
 
 inline void Swap(int *a, int *b)
 {
@@ -73,7 +75,6 @@ void setqueen(const int n, queenNode &queen)
 	{
 		queen.h += (queen.d1[i] * (queen.d1[i] - 1)) / 2;
 		queen.h += (queen.d2[i] * (queen.d2[i] - 1)) / 2;
-		
 	}
 }
 
@@ -94,14 +95,15 @@ void QS(void)
 	int restart = 0;
 	int oldH;
 	int swapPerformed;
+	int loopCount;
+	int limit;
 	int attackCounter;
 	int attackedQueen;
 	int randomQueen;
-	queenNode queen;
 	queen.d1.resize(2 * nQueen - 1);
 	queen.d2.resize(2 * nQueen - 1);
 	queen.attack.resize(nQueen);
-	do 
+REDO:	do 
 	{
 		queen.h = 0;
 		queen.d1.assign(queen.d1.size(), 0);
@@ -109,6 +111,8 @@ void QS(void)
 		queen.attack.assign(queen.attack.size(), 0);
 		setqueen(nQueen, queen);
 		attackCounter = compute_attacks(queen);
+		loopCount = 0;
+		limit = C1*queen.h;
 		do
 		{
 
@@ -118,50 +122,56 @@ void QS(void)
 			{
 				oldH = queen.h;
 				attackedQueen = queen.attack[i];
-				attackedQueen = queen.attack[attackedQueen];
-				for (int j = 0; j < nQueen; j++)
+				//for (int j = 0; j < nQueen; j++)
 				{
-					//randomQueen = dist(gen) % nQueen;
+					randomQueen = dist(gen) % nQueen;
 					//拿掉i行和j行的皇后
-					queen.h = queen.h - (queen.d1[attackedQueen + queen.q[attackedQueen]] - 1) - (queen.d1[j + queen.q[j]] - 1)
-						- (queen.d2[attackedQueen - queen.q[attackedQueen] + nQueen - 1] - 1) - (queen.d2[j - queen.q[j] + nQueen - 1]);
+					queen.h = queen.h - (queen.d1[attackedQueen + queen.q[attackedQueen]] - 1) - (queen.d1[randomQueen + queen.q[randomQueen]] - 1)
+						- (queen.d2[attackedQueen - queen.q[attackedQueen] + nQueen - 1] - 1) - (queen.d2[randomQueen - queen.q[randomQueen] + nQueen - 1]);
 					//尝试交换
 					queen.d1[attackedQueen + queen.q[attackedQueen]]--;
-					queen.d1[attackedQueen + queen.q[j]]++;
+					queen.d1[attackedQueen + queen.q[randomQueen]]++;
 					queen.d2[attackedQueen - queen.q[attackedQueen] + (nQueen - 1)]--;
-					queen.d2[attackedQueen - queen.q[j] + (nQueen - 1)]++;
-					queen.d1[j + queen.q[j]]--;
-					queen.d1[j + queen.q[attackedQueen]]++;
-					queen.d2[j - queen.q[j] + (nQueen - 1)]--;
-					queen.d2[j - queen.q[attackedQueen] + (nQueen - 1)]++;
-					Swap(&queen.q[attackedQueen], &queen.q[j]);
+					queen.d2[attackedQueen - queen.q[randomQueen] + (nQueen - 1)]++;
+					queen.d1[randomQueen + queen.q[randomQueen]]--;
+					queen.d1[randomQueen + queen.q[attackedQueen]]++;
+					queen.d2[randomQueen - queen.q[randomQueen] + (nQueen - 1)]--;
+					queen.d2[randomQueen - queen.q[attackedQueen] + (nQueen - 1)]++;
+					Swap(&queen.q[attackedQueen], &queen.q[randomQueen]);
 					//计算新的冲突数
-					queen.h = queen.h + (queen.d1[attackedQueen + queen.q[attackedQueen]] - 1) + (queen.d1[j + queen.q[j]] - 1)
-						+ (queen.d2[attackedQueen - queen.q[attackedQueen] + nQueen - 1] - 1) + (queen.d2[j - queen.q[j] + nQueen - 1]);
+					queen.h = queen.h + (queen.d1[attackedQueen + queen.q[attackedQueen]] - 1) + (queen.d1[randomQueen + queen.q[randomQueen]] - 1)
+						+ (queen.d2[attackedQueen - queen.q[attackedQueen] + nQueen - 1] - 1) + (queen.d2[randomQueen - queen.q[randomQueen] + nQueen - 1]);
+
 
 					if (oldH <= queen.h)
 					{
 						//冲突未减小，放回去
 						queen.d1[attackedQueen + queen.q[attackedQueen]]--;
-						queen.d1[attackedQueen + queen.q[j]]++;
+						queen.d1[attackedQueen + queen.q[randomQueen]]++;
 						queen.d2[attackedQueen - queen.q[attackedQueen] + (nQueen - 1)]--;
-						queen.d2[attackedQueen - queen.q[j] + (nQueen - 1)]++;
-						queen.d1[j + queen.q[j]]--;
-						queen.d1[j + queen.q[attackedQueen]]++;
-						queen.d2[j - queen.q[j] + (nQueen - 1)]--;
-						queen.d2[j - queen.q[attackedQueen] + (nQueen - 1)]++;
-						Swap(&queen.q[attackedQueen], &queen.q[j]);
+						queen.d2[attackedQueen - queen.q[randomQueen] + (nQueen - 1)]++;
+						queen.d1[randomQueen + queen.q[randomQueen]]--;
+						queen.d1[randomQueen + queen.q[attackedQueen]]++;
+						queen.d2[randomQueen - queen.q[randomQueen] + (nQueen - 1)]--;
+						queen.d2[randomQueen - queen.q[attackedQueen] + (nQueen - 1)]++;
+						Swap(&queen.q[attackedQueen], &queen.q[randomQueen]);
 						queen.h = oldH;
 					}
 					else
 					{
-						swapPerformed++;
+						if (queen.h == 0)
+						{
+							break;
+						}
+						if (queen.h < limit)
+						{
+							limit = C1*limit;
+							attackCounter = compute_attacks(queen);
+						}
 					}
-				}
-				attackCounter = compute_attacks(queen);
-
-					
+				}					
 			}
+			loopCount += attackCounter;
 // 				randomQueen = dist(gen) % nQueen;
 // 				
 // 				if (queen.d1[attackedQueen + queen.q[attackedQueen]] > 1)
@@ -214,16 +224,23 @@ void QS(void)
 // 				}				 
 // 			}
 // 			attackCounter = compute_attacks(queen);
-		}while (swapPerformed != 0);
+		}while (loopCount<C2*nQueen);
 		restart++;
 	} while (queen.h != 0);
-	ofstream output("QS_RESULT.txt");
-	for (int i = 0; i < nQueen; i++)
+
+	if (queen.q[obstacleX]==obstacleY)
 	{
-		output << queen.q[i] << endl;
+		cout << "sorry，unfortunate things happend TAT" << endl<<"Regenerating!"<<endl;
+		goto REDO;
 	}
+
+	
+	/*for (int i = 0; i < nQueen; i++)
+	{
+		
+	}*/
 	cout << restart << endl;
-	output.close();
+	
 }
 
 
@@ -231,7 +248,7 @@ void QS(void)
 int main()
 {
 	ifstream input("input.txt");
-	ofstream output("output.txt");
+	ofstream output("QS_RESULT.txt");
 	queenNode current, neighboor;
 
 	
@@ -242,23 +259,51 @@ int main()
 	}
 	input >> nQueen >> obstacleX >> obstacleY;
 	input.close();
-	c = 100;
+	if (nQueen >= 5e5)
+	{
+		C2 = 1;
+		c = 100;
+	}
+	else if (nQueen>=5e4)
+	{
+		C2 = 1;
+		c = 80;
+	}
+	else if (nQueen>5e3)
+	{
+		C2 = 1;
+		c = 50;
+	}
+	else if (nQueen>5e2)
+	{
+		C2 = 32;
+		c = 50;
+	}
+	else if (nQueen > 10)
+	{
+		C2 = 32;
+		c = 30;
+	}
+	else
+	{
+		C2 = 32;
+		c = 8;
+	}
+	//c = 100;
 	time_t start, end;
 	start = clock();
-
-	
-
 	QS();
-
 	end = clock();
 	cout << (double)(end - start) / CLOCKS_PER_SEC;
-
-
-	/*int a[] = { 2,0,3,1 };
-	int b[] = { 2,2 };
-	putRes(a,b,b,4);
-	output.close();*/
-	getchar();
+	
+	
+	for (int i=0;i<nQueen;i++)
+	{
+		output << queen.q[i] << endl;
+	}
+	output<< (double)(end - start) / CLOCKS_PER_SEC;
+	
+	output.close();
 	return 0;
 }
 
