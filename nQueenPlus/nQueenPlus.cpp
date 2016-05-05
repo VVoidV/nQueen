@@ -259,6 +259,52 @@ int main()
 	}
 	input >> nQueen >> obstacleX >> obstacleY;
 	input.close();
+
+	if (nQueen<3)
+	{
+		cout << "读书少别骗我，没解的啊！" << endl;
+		output << "NULL" << endl;
+		output.close();
+		return 0;
+	}
+	if (nQueen == 3)
+	{
+		if (obstacleX + obstacleY == 1 || obstacleY + obstacleX == 3)
+		{
+			switch (obstacleX)
+			{
+			case 0:
+				output << 0 << ' ' << 2 << endl <<-1<<endl<< 1 << endl << 0 ;
+				break;
+			case 1:
+				if (obstacleY==0)	
+				{
+					output << 0 << endl << 2 << endl << 0 << endl << 0;
+				}
+				else
+				{
+					output << 2 << endl << 0 << endl << 2 << endl << 0;
+				}
+				break;
+			case 2:
+				output << 1 << endl << -1 << endl << 0<<' '<< 2<< endl << 0;
+				break;
+			default:
+				break;
+			}
+			output.close();
+			return 0;
+
+		}
+		else
+		{
+			cout << "读书少别骗我，没解的啊！" << endl;
+			output << "NULL" << endl;
+			output.close();
+			return 0;
+		}
+	}
+
 	if (nQueen >= 5e5)
 	{
 		C2 = 1;
